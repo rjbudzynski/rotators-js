@@ -2,8 +2,7 @@ import React, { useRef, useEffect } from 'react';
 import { Config } from '../physics/constants';
 import type { State } from '../physics/solver';
 
-import 'katex/dist/katex.min.css';
-import { InlineMath } from 'react-katex';
+import LagrangianSVG from './LagrangianSVG';
 
 interface Props {
   state: State;
@@ -12,8 +11,6 @@ interface Props {
 const SimulationCanvas: React.FC<Props> = ({ state }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [t1, , t2] = state;
-
-  const lagrangianFormula = `\\mathcal{L} = \\frac{1}{2}(\\dot{\\theta}_1^2 + \\dot{\\theta}_2^2) + g(\\cos\\theta_1 + \\cos\\theta_2) + J\\cos(\\theta_1 - \\theta_2)`;
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -92,8 +89,8 @@ const SimulationCanvas: React.FC<Props> = ({ state }) => {
 
   return (
     <div className="d-flex flex-column align-items-center">
-      <div className="mb-2 text-center" style={{ fontSize: '0.9rem' }}>
-        <InlineMath math={lagrangianFormula} />
+      <div className="mb-2 text-center" style={{ width: '100%' }}>
+        <LagrangianSVG />
       </div>
       <canvas 
         ref={canvasRef} 

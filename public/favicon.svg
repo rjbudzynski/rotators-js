@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Background Plate -->
+  <rect width="32" height="32" rx="7" fill="#f8f9fa"/>
+  
+  <!-- Rotator 1 (Blue) -->
+  <circle cx="10" cy="10" r="1.5" fill="#1f77b4" />
+  <line x1="10" y1="10" x2="6" y2="24" stroke="#1f77b4" stroke-width="3" stroke-linecap="round" />
+  <circle cx="6" cy="24" r="4" fill="#1f77b4" />
+  
+  <!-- Rotator 2 (Orange) -->
+  <circle cx="22" cy="10" r="1.5" fill="#ff7f0e" />
+  <line x1="22" y1="10" x2="26" y2="24" stroke="#ff7f0e" stroke-width="3" stroke-linecap="round" />
+  <circle cx="26" cy="24" r="4" fill="#ff7f0e" />
+  
+  <!-- Coupling Link (Gray) -->
+  <line x1="6" y1="24" x2="26" y2="24" stroke="#6c757d" stroke-width="1.5" stroke-dasharray="2,1.5" opacity="0.7" />
+</svg>

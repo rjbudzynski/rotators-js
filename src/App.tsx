@@ -8,6 +8,8 @@ import UPlotChart from './components/UPlotChart';
 import uPlot from 'uplot';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
+import { Github } from 'lucide-react';
+
 const App: React.FC = () => {
   const { state, uPlotData, isRunning, toggle, reset } = useSimulation();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -123,6 +125,16 @@ const App: React.FC = () => {
       <Navbar bg="dark" variant="dark" className="mb-4">
         <Container fluid>
           <Navbar.Brand>Coupled Rotators Simulation</Navbar.Brand>
+          <Navbar.Collapse className="justify-content-end">
+            <a 
+              href="https://github.com/rjbudzynski/rotators-js" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-white opacity-75 hover-opacity-100"
+            >
+              <Github size={24} />
+            </a>
+          </Navbar.Collapse>
         </Container>
       </Navbar>
 
@@ -158,6 +170,15 @@ const App: React.FC = () => {
           </Col>
         </Row>
       </Container>
+
+      <footer className="mt-auto py-3 text-center text-muted small">
+        <Container fluid>
+          <span>
+            © 2026 <a href="mailto:robert@budzynski.xyz" className="text-decoration-none text-muted fw-bold">Robert Budzyński</a>. 
+            All rights reserved. | Build date: Monday, January 26, 2026
+          </span>
+        </Container>
+      </footer>
     </div>
   );
 };

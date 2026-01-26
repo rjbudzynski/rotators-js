@@ -11,21 +11,17 @@
   },
   "dependencies": {
     "bootstrap": "^5.3.8",
-    "katex": "^0.16.28",
     "lucide-react": "^0.563.0",
     "react": "^19.2.0",
     "react-bootstrap": "^2.10.10",
     "react-dom": "^19.2.0",
-    "react-katex": "^3.1.0",
     "uplot": "^1.6.32"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
-    "@types/katex": "^0.16.8",
     "@types/node": "^24.10.1",
     "@types/react": "^19.2.5",
     "@types/react-dom": "^19.2.3",
-    "@types/react-katex": "^3.0.4",
     "@vitejs/plugin-react": "^5.1.1",
     "eslint": "^9.39.1",
     "eslint-plugin-react-hooks": "^7.0.1",
