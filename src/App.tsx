@@ -1,0 +1,165 @@
+import React, { useMemo, useState, useEffect, useRef } from 'react';
+import { Container, Row, Col, Navbar } from 'react-bootstrap';
+import { useSimulation } from './physics/useSimulation';
+import { Config } from './physics/constants';
+import SimulationCanvas from './components/SimulationCanvas';
+import ControlPanel from './components/ControlPanel';
+import UPlotChart from './components/UPlotChart';
+import uPlot from 'uplot';
+import 'bootstrap/dist/css/bootstrap.min.css';
+
+const App: React.FC = () => {
+  const { state, uPlotData, isRunning, toggle, reset } = useSimulation();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState(500);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    
+    const observer = new ResizeObserver((entries) => {
+      for (let entry of entries) {
+        setContainerWidth(entry.contentRect.width - 20); // small padding
+      }
+    });
+    
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  const chartHeight = 180;
+
+  const thetaOptions: uPlot.Options = useMemo(() => ({
+    width: containerWidth,
+    height: chartHeight,
+    title: "Angle (rad)",
+    legend: { show: true, live: false },
+    series: [
+      {},
+      { label: "Theta 1", stroke: "#1f77b4", width: 2, spanGaps: false },
+      { label: "Theta 2", stroke: "#ff7f0e", width: 2, spanGaps: false },
+    ],
+    axes: [
+      { grid: { show: true, stroke: "#eee" } },
+      { grid: { show: true, stroke: "#eee" } },
+    ],
+    scales: {
+      x: { 
+        time: false,
+        range: (u) => {
+          const dataX = u.data[0];
+          const lastX = dataX[dataX.length - 1] || 0;
+          return [Math.max(0, lastX - Config.WINDOW_W), Math.max(Config.WINDOW_W, lastX)];
+        }
+      },
+      y: { range: Config.THETA_Y_LIM }
+    }
+  }), [uPlotData.theta, containerWidth]);
+
+  const omegaOptions: uPlot.Options = useMemo(() => ({
+    width: containerWidth,
+    height: chartHeight,
+    title: "Velocity (rad/s)",
+    legend: { show: true, live: false },
+    series: [
+      {},
+      { label: "Omega 1", stroke: "#1f77b4", width: 2, spanGaps: true },
+      { label: "Omega 2", stroke: "#ff7f0e", width: 2, spanGaps: true },
+    ],
+    axes: [
+      { grid: { show: true, stroke: "#eee" } },
+      { grid: { show: true, stroke: "#eee" } },
+    ],
+    scales: {
+      x: { 
+        time: false,
+        range: (u) => {
+          const dataX = u.data[0];
+          const lastX = dataX[dataX.length - 1] || 0;
+          return [Math.max(0, lastX - Config.WINDOW_W), Math.max(Config.WINDOW_W, lastX)];
+        }
+      },
+      y: { range: Config.OMEGA_Y_LIM }
+    }
+  }), [uPlotData.omega, containerWidth]);
+
+  const energyOptions: uPlot.Options = useMemo(() => ({
+    width: containerWidth,
+    height: chartHeight,
+    title: "Energy (J)",
+    legend: { show: true, live: false },
+    series: [
+      {},
+      { label: "E1", stroke: "#1f77b4", width: 2, spanGaps: true },
+      { label: "E2", stroke: "#ff7f0e", width: 2, spanGaps: true },
+      { label: "Total", stroke: "#000", width: 1, dash: [5, 5], spanGaps: true },
+    ],
+    axes: [
+      { grid: { show: true, stroke: "#eee" } },
+      { grid: { show: true, stroke: "#eee" } },
+    ],
+    scales: {
+      x: { 
+        time: false,
+        range: (u) => {
+          const dataX = u.data[0];
+          const lastX = dataX[dataX.length - 1] || 0;
+          return [Math.max(0, lastX - Config.WINDOW_W), Math.max(Config.WINDOW_W, lastX)];
+        }
+      },
+      y: { range: Config.ENERGY_Y_LIM }
+    }
+  }), [uPlotData.energy, containerWidth]);
+
+  const handleReset = (p: any) => {
+    reset(p.t1, p.w1, p.t2, p.w2, p.J, p.g);
+  };
+
+  const handleQuit = () => {
+    window.close();
+  };
+
+  return (
+    <div className="bg-light min-vh-100">
+      <Navbar bg="dark" variant="dark" className="mb-4">
+        <Container fluid>
+          <Navbar.Brand>Coupled Rotators Simulation</Navbar.Brand>
+        </Container>
+      </Navbar>
+
+      <Container fluid className="px-4">
+        <Row>
+          <Col md={3} lg={2}>
+            <ControlPanel 
+              isRunning={isRunning} 
+              onToggle={toggle} 
+              onReset={handleReset} 
+              onQuit={handleQuit} 
+            />
+          </Col>
+          <Col md={9} lg={10}>
+            <Row>
+              <Col lg={5} className="mb-4">
+                <SimulationCanvas state={state} />
+              </Col>
+              <Col lg={7} ref={containerRef}>
+                <div className="d-flex flex-column gap-3">
+                  <div className="bg-white p-2 rounded shadow-sm">
+                    <UPlotChart options={thetaOptions} data={uPlotData.theta as uPlot.AlignedData} width={containerWidth} />
+                  </div>
+                  <div className="bg-white p-2 rounded shadow-sm">
+                    <UPlotChart options={omegaOptions} data={uPlotData.omega as uPlot.AlignedData} width={containerWidth} />
+                  </div>
+                  <div className="bg-white p-2 rounded shadow-sm">
+                    <UPlotChart options={energyOptions} data={uPlotData.energy as uPlot.AlignedData} width={containerWidth} />
+                  </div>
+                </div>
+              </Col>
+            </Row>
+          </Col>
+        </Row>
+      </Container>
+    </div>
+  );
+};
+
+export default App;
