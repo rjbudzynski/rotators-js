@@ -82,6 +82,10 @@ export class RotatorEngine {
     const dTheta1 = wrap(this.unwrappedTheta[0]);
     const dTheta2 = wrap(this.unwrappedTheta[1]);
 
+    const e1 = 0.5 * w1 * w1 + this.g * (1.0 - Math.cos(t1));
+    const e2 = 0.5 * w2 * w2 + this.g * (1.0 - Math.cos(t2));
+    const eTotal = e1 + e2 + this.J * (1.0 - Math.cos(t1 - t2));
+
     // Check for jumps to break lines in uPlot
     if (this.historyTheta1.length > 0) {
       const lastIdx = this.historyTheta1.length - 1;
@@ -89,25 +93,21 @@ export class RotatorEngine {
       const lastT2 = this.historyTheta2[lastIdx];
 
       if (lastT1 !== null && lastT2 !== null) {
-        // A wrap-around is approximately 2*PI (~6.28). 
-        // We use 5.0 as a robust threshold to detect this jump.
-        if (Math.abs(dTheta1 - lastT1) > 5.0 || Math.abs(dTheta2 - lastT2) > 5.0) {
-          // Insert nulls at a timestamp just before the current one to break the line.
-          // Using a very small delta to keep the gap visually imperceptible in continuous plots.
-          this.historyT.push(t - 1e-6);
-          this.historyTheta1.push(null);
-          this.historyTheta2.push(null);
-          this.historyOmega1.push(null);
-          this.historyE1.push(null);
-          this.historyE2.push(null);
-          this.historyETotal.push(null);
+        const jump1 = Math.abs(dTheta1 - (lastT1 as number)) > 5.0;
+        const jump2 = Math.abs(dTheta2 - (lastT2 as number)) > 5.0;
+
+        if (jump1 || jump2) {
+          this.historyT.push(t - 1e-9);
+          this.historyTheta1.push(jump1 ? null : dTheta1);
+          this.historyTheta2.push(jump2 ? null : dTheta2);
+          this.historyOmega1.push(w1);
+          this.historyOmega2.push(w2);
+          this.historyE1.push(e1);
+          this.historyE2.push(e2);
+          this.historyETotal.push(eTotal);
         }
       }
     }
-
-    const e1 = 0.5 * w1 * w1 + this.g * (1.0 - Math.cos(t1));
-    const e2 = 0.5 * w2 * w2 + this.g * (1.0 - Math.cos(t2));
-    const eTotal = e1 + e2 + this.J * (1.0 - Math.cos(t1 - t2));
 
     this.historyT.push(t);
     this.historyTheta1.push(dTheta1);

@@ -10,4 +10,12 @@ export default defineConfig({
     },
     hmr: true,
   },
+  define: {
+    __BUILD_DATE__: JSON.stringify(new Date().toLocaleString('en-US', { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    })),
+  },
 })

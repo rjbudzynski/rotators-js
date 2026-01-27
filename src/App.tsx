@@ -10,6 +10,8 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 
 import { Github } from 'lucide-react';
 
+declare const __BUILD_DATE__: string;
+
 const App: React.FC = () => {
   const { state, uPlotData, isRunning, toggle, reset } = useSimulation();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -175,7 +177,7 @@ const App: React.FC = () => {
         <Container fluid>
           <span>
             © 2026 <a href="mailto:robert@budzynski.xyz" className="text-decoration-none text-muted fw-bold">Robert Budzyński</a>. 
-            All rights reserved. | Build date: Monday, January 26, 2026
+            All rights reserved. | Build date: {__BUILD_DATE__}
           </span>
         </Container>
       </footer>
