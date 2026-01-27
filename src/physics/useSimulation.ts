@@ -61,7 +61,7 @@ export function useSimulation() {
   }, [engine]);
 
   // Return a fresh reference to the data structure when tick changes
-  const uPlotData = useMemo(() => engine.getUPlotData(), [engine, tick]);
+  const uPlotData = useMemo(() => engine.getUPlotData(), [engine, tick]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return {
     state,
