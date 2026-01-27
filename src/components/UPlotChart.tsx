@@ -20,13 +20,13 @@ const UPlotChart: React.FC<Props> = ({ options, data, width, tick }) => {
     return () => {
       uPlotInstance.current?.destroy();
     };
-  }, [options]);
+  }, [options, data]);
 
   useEffect(() => {
     if (uPlotInstance.current) {
       uPlotInstance.current.setData(data);
     }
-  }, [tick]);
+  }, [tick, data]);
 
   useEffect(() => {
     if (uPlotInstance.current && width) {

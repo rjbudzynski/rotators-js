@@ -4,61 +4,64 @@ import { Config } from './constants';
 import type { State } from './solver';
 
 export function useSimulation() {
-  const engineRef = useRef(new RotatorEngine());
+  const [engine] = useState(() => new RotatorEngine());
   const [isRunning, setIsRunning] = useState(false);
-  const [state, setState] = useState<State>(engineRef.current.yState);
-  // tick is used to force re-render components that need the latest engine data
+  const [state, setState] = useState<State>(engine.yState);
   const [tick, setTick] = useState(0); 
   
   const requestRef = useRef<number>(undefined);
   const lastUpdateRef = useRef<number>(0);
 
   const step = useCallback(() => {
-    const [, s] = engineRef.current.step();
+    const [, s] = engine.step();
     setState(s);
     setTick(t => t + 1);
-  }, []);
-
-  const animate = useCallback((now: number) => {
-    if (lastUpdateRef.current === 0) {
-      lastUpdateRef.current = now;
-    }
-    
-    const elapsed = now - lastUpdateRef.current;
-    
-    if (elapsed >= Config.SIM_INTERVAL) {
-      step();
-      lastUpdateRef.current = now;
-    }
-    
-    requestRef.current = requestAnimationFrame(animate);
-  }, [step]);
+  }, [engine]);
 
   useEffect(() => {
-    if (isRunning) {
-      requestRef.current = requestAnimationFrame(animate);
-    } else {
-      if (requestRef.current) {
+    if (!isRunning) {
+      if (requestRef.current !== undefined) {
         cancelAnimationFrame(requestRef.current);
       }
+      return;
     }
+
+    const onTick = (now: number) => {
+      if (lastUpdateRef.current === 0) {
+        lastUpdateRef.current = now;
+      }
+      
+      const elapsed = now - lastUpdateRef.current;
+      
+      if (elapsed >= Config.SIM_INTERVAL) {
+        step();
+        lastUpdateRef.current = now;
+      }
+      
+      requestRef.current = requestAnimationFrame(onTick);
+    };
+
+    requestRef.current = requestAnimationFrame(onTick);
+    
     return () => {
-      if (requestRef.current) {
+      if (requestRef.current !== undefined) {
         cancelAnimationFrame(requestRef.current);
       }
     };
-  }, [isRunning, animate]);
+  }, [isRunning, step]);
 
-  const toggle = () => setIsRunning(!isRunning);
+  const toggle = useCallback(() => setIsRunning(r => !r), []);
   
-  const reset = (t1: number, w1: number, t2: number, w2: number, J: number, g: number) => {
-    engineRef.current.reset(t1, w1, t2, w2, J, g);
-    setState(engineRef.current.yState);
+  const reset = useCallback((t1: number, w1: number, t2: number, w2: number, J: number, g: number) => {
+    engine.reset(t1, w1, t2, w2, J, g);
+    setState(engine.yState);
+    lastUpdateRef.current = 0;
     setTick(t => t + 1);
     setIsRunning(false);
-  };
+  }, [engine]);
 
-  const uPlotData = useMemo(() => engineRef.current.getUPlotData(), [isRunning]);
+  // Return a fresh reference to the data structure when tick changes
+  const uPlotData = useMemo(() => engine.getUPlotData(), [engine, tick]);
 
   return {
     state,
@@ -67,6 +70,6 @@ export function useSimulation() {
     isRunning,
     toggle,
     reset,
-    engine: engineRef.current
+    engine
   };
 }

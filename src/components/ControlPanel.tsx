@@ -1,11 +1,12 @@
 import React from 'react';
 import { Form, Button, Card } from 'react-bootstrap';
 import { Play, Pause, RotateCcw, XCircle } from 'lucide-react';
+import type { SimulationParams } from '../physics/engine';
 
 interface Props {
   isRunning: boolean;
   onToggle: () => void;
-  onReset: (params: any) => void;
+  onReset: (params: SimulationParams) => void;
   onQuit: () => void;
 }
 
@@ -25,7 +26,7 @@ const ControlPanel: React.FC<Props> = ({ isRunning, onToggle, onReset, onQuit })
   };
 
   const handleResetClick = () => {
-    const p = {
+    const p: SimulationParams = {
       t1: parseFloat(params.t1) || 0,
       w1: parseFloat(params.w1) || 0,
       t2: parseFloat(params.t2) || 0,

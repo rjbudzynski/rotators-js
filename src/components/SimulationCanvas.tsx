@@ -85,7 +85,7 @@ const SimulationCanvas: React.FC<Props> = ({ state }) => {
     ctx.arc(toScreenX(x2), toScreenY(y2), 8, 0, 2 * Math.PI);
     ctx.fill();
 
-  }, [state]);
+  }, [state, t1, t2]);
 
   return (
     <div className="d-flex flex-column align-items-center">

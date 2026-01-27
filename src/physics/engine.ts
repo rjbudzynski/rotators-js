@@ -2,6 +2,15 @@ import { Config } from './constants';
 import { rk4Step } from './solver';
 import type { State } from './solver';
 
+export interface SimulationParams {
+  t1: number;
+  w1: number;
+  t2: number;
+  w2: number;
+  g: number;
+  J: number;
+}
+
 export class RotatorEngine {
   public yState: State = [Math.PI - 0.001, 0, 0, 0];
   public tCurr: number = 0;
@@ -50,14 +59,15 @@ export class RotatorEngine {
     this.lastTheta = [t1, t2];
     this.unwrappedTheta = [t1, t2];
 
-    this.uPlotT = [];
-    this.uPlotTh1 = [];
-    this.uPlotTh2 = [];
-    this.uPlotW1 = [];
-    this.uPlotW2 = [];
-    this.uPlotE1 = [];
-    this.uPlotE2 = [];
-    this.uPlotETot = [];
+    // Clear arrays while preserving references
+    this.uPlotT.length = 0;
+    this.uPlotTh1.length = 0;
+    this.uPlotTh2.length = 0;
+    this.uPlotW1.length = 0;
+    this.uPlotW2.length = 0;
+    this.uPlotE1.length = 0;
+    this.uPlotE2.length = 0;
+    this.uPlotETot.length = 0;
 
     this.addToHistory(this.tCurr, this.yState);
   }
@@ -137,12 +147,12 @@ export class RotatorEngine {
   }
 
   public getUPlotData() {
-    // Return references to the persistent arrays. 
-    // IMPORTANT: uPlot will read these directly.
+    // Return fresh container arrays pointing to the persistent buffers.
+    // This ensures uPlot detects data changes even if the inner array references are reused.
     return {
-      theta: [this.uPlotT, this.uPlotTh1, this.uPlotTh2],
-      omega: [this.uPlotT, this.uPlotW1, this.uPlotW2],
-      energy: [this.uPlotT, this.uPlotE1, this.uPlotE2, this.uPlotETot],
+      theta: [this.uPlotT, this.uPlotTh1, this.uPlotTh2] as uPlot.AlignedData,
+      omega: [this.uPlotT, this.uPlotW1, this.uPlotW2] as uPlot.AlignedData,
+      energy: [this.uPlotT, this.uPlotE1, this.uPlotE2, this.uPlotETot] as uPlot.AlignedData,
     };
   }
 }

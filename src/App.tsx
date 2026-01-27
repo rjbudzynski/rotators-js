@@ -2,6 +2,7 @@ import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { Container, Row, Col, Navbar } from 'react-bootstrap';
 import { useSimulation } from './physics/useSimulation';
 import { Config } from './physics/constants';
+import type { SimulationParams } from './physics/engine';
 import SimulationCanvas from './components/SimulationCanvas';
 import ControlPanel from './components/ControlPanel';
 import UPlotChart from './components/UPlotChart';
@@ -21,7 +22,7 @@ const App: React.FC = () => {
     if (!containerRef.current) return;
     
     const observer = new ResizeObserver((entries) => {
-      for (let entry of entries) {
+      for (const entry of entries) {
         setContainerWidth(entry.contentRect.width - 20); // small padding
       }
     });
@@ -114,7 +115,7 @@ const App: React.FC = () => {
     }
   }), [containerWidth]);
 
-  const handleReset = (p: any) => {
+  const handleReset = (p: SimulationParams) => {
     reset(p.t1, p.w1, p.t2, p.w2, p.J, p.g);
   };
 
