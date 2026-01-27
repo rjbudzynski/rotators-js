@@ -2,36 +2,38 @@ import { Config } from './constants';
 import { rk4Step } from './solver';
 import type { State } from './solver';
 
-export interface SimulationHistory {
-  t: number[];
-  theta: [number[], number[]];
-  omega: [number[], number[]];
-  energy: [number[], number[], number[]]; // e1, e2, etotal
-}
-
 export class RotatorEngine {
   public yState: State = [Math.PI - 0.001, 0, 0, 0];
   public tCurr: number = 0;
   public J: number = 2.0;
   public g: number = 9.81;
 
-  private maxHistory: number;
-  private historyT: number[] = [];
-  private historyTheta1: (number | null)[] = [];
-  private historyTheta2: (number | null)[] = [];
-  private historyOmega1: (number | null)[] = [];
-  private historyOmega2: (number | null)[] = [];
-  private historyE1: (number | null)[] = [];
-  private historyE2: (number | null)[] = [];
-  private historyETotal: (number | null)[] = [];
-
   private lastTheta: [number, number] = [0, 0];
   private unwrappedTheta: [number, number] = [0, 0];
 
   constructor() {
-    this.maxHistory = Math.floor(Config.WINDOW_W / Config.DT) + 2;
+    // For uPlot we need arrays that can hold nulls
+    this.uPlotT = [];
+    this.uPlotTh1 = [];
+    this.uPlotTh2 = [];
+    this.uPlotW1 = [];
+    this.uPlotW2 = [];
+    this.uPlotE1 = [];
+    this.uPlotE2 = [];
+    this.uPlotETot = [];
+
     this.reset();
   }
+
+  // Persistent arrays to avoid GC pressure
+  private uPlotT: number[];
+  private uPlotTh1: (number | null)[];
+  private uPlotTh2: (number | null)[];
+  private uPlotW1: (number | null)[];
+  private uPlotW2: (number | null)[];
+  private uPlotE1: (number | null)[];
+  private uPlotE2: (number | null)[];
+  private uPlotETot: (number | null)[];
 
   public reset(
     t1: number = Math.PI - 0.001,
@@ -48,14 +50,14 @@ export class RotatorEngine {
     this.lastTheta = [t1, t2];
     this.unwrappedTheta = [t1, t2];
 
-    this.historyT = [];
-    this.historyTheta1 = [];
-    this.historyTheta2 = [];
-    this.historyOmega1 = [];
-    this.historyOmega2 = [];
-    this.historyE1 = [];
-    this.historyE2 = [];
-    this.historyETotal = [];
+    this.uPlotT = [];
+    this.uPlotTh1 = [];
+    this.uPlotTh2 = [];
+    this.uPlotW1 = [];
+    this.uPlotW2 = [];
+    this.uPlotE1 = [];
+    this.uPlotE2 = [];
+    this.uPlotETot = [];
 
     this.addToHistory(this.tCurr, this.yState);
   }
@@ -63,21 +65,21 @@ export class RotatorEngine {
   private addToHistory(t: number, y: State) {
     const [t1, w1, t2, w2] = y;
 
-    let dt1 = t1 - this.lastTheta[0];
-    dt1 = ((dt1 + Math.PI) % (2 * Math.PI) + (2 * Math.PI)) % (2 * Math.PI) - Math.PI;
-    this.unwrappedTheta[0] += dt1;
-
-    let dt2 = t2 - this.lastTheta[1];
-    dt2 = ((dt2 + Math.PI) % (2 * Math.PI) + (2 * Math.PI)) % (2 * Math.PI) - Math.PI;
-    this.unwrappedTheta[1] += dt2;
-
-    this.lastTheta = [t1, t2];
-
     const wrap = (val: number) => {
       const range = 2 * Math.PI;
       const offset = val + Math.PI;
       return ((offset % range + range) % range) - Math.PI;
     };
+
+    let dt1 = t1 - this.lastTheta[0];
+    dt1 = wrap(dt1);
+    this.unwrappedTheta[0] += dt1;
+
+    let dt2 = t2 - this.lastTheta[1];
+    dt2 = wrap(dt2);
+    this.unwrappedTheta[1] += dt2;
+
+    this.lastTheta = [t1, t2];
 
     const dTheta1 = wrap(this.unwrappedTheta[0]);
     const dTheta2 = wrap(this.unwrappedTheta[1]);
@@ -86,48 +88,45 @@ export class RotatorEngine {
     const e2 = 0.5 * w2 * w2 + this.g * (1.0 - Math.cos(t2));
     const eTotal = e1 + e2 + this.J * (1.0 - Math.cos(t1 - t2));
 
-    // Check for jumps to break lines in uPlot
-    if (this.historyTheta1.length > 0) {
-      const lastIdx = this.historyTheta1.length - 1;
-      const lastT1 = this.historyTheta1[lastIdx];
-      const lastT2 = this.historyTheta2[lastIdx];
+    const push = (pt: number, th1: number | null, th2: number | null, v1: number, v2: number, en1: number, en2: number, entot: number) => {
+      this.uPlotT.push(pt);
+      this.uPlotTh1.push(th1);
+      this.uPlotTh2.push(th2);
+      this.uPlotW1.push(v1);
+      this.uPlotW2.push(v2);
+      this.uPlotE1.push(en1);
+      this.uPlotE2.push(en2);
+      this.uPlotETot.push(entot);
+
+      // Keep window within bounds
+      const limit = Math.floor(Config.WINDOW_W / Config.DT) * 1.5;
+      if (this.uPlotT.length > limit) {
+        this.uPlotT.shift();
+        this.uPlotTh1.shift();
+        this.uPlotTh2.shift();
+        this.uPlotW1.shift();
+        this.uPlotW2.shift();
+        this.uPlotE1.shift();
+        this.uPlotE2.shift();
+        this.uPlotETot.shift();
+      }
+    };
+
+    // Check for jumps
+    if (this.uPlotTh1.length > 0) {
+      const lastT1 = this.uPlotTh1[this.uPlotTh1.length - 1];
+      const lastT2 = this.uPlotTh2[this.uPlotTh2.length - 1];
 
       if (lastT1 !== null && lastT2 !== null) {
         const jump1 = Math.abs(dTheta1 - (lastT1 as number)) > 5.0;
         const jump2 = Math.abs(dTheta2 - (lastT2 as number)) > 5.0;
-
         if (jump1 || jump2) {
-          this.historyT.push(t - 1e-9);
-          this.historyTheta1.push(jump1 ? null : dTheta1);
-          this.historyTheta2.push(jump2 ? null : dTheta2);
-          this.historyOmega1.push(w1);
-          this.historyOmega2.push(w2);
-          this.historyE1.push(e1);
-          this.historyE2.push(e2);
-          this.historyETotal.push(eTotal);
+          push(t - 1e-9, jump1 ? null : dTheta1, jump2 ? null : dTheta2, w1, w2, e1, e2, eTotal);
         }
       }
     }
 
-    this.historyT.push(t);
-    this.historyTheta1.push(dTheta1);
-    this.historyTheta2.push(dTheta2);
-    this.historyOmega1.push(w1);
-    this.historyOmega2.push(w2);
-    this.historyE1.push(e1);
-    this.historyE2.push(e2);
-    this.historyETotal.push(eTotal);
-
-    while (this.historyT.length > this.maxHistory * 1.5) {
-      this.historyT.shift();
-      this.historyTheta1.shift();
-      this.historyTheta2.shift();
-      this.historyOmega1.shift();
-      this.historyOmega2.shift();
-      this.historyE1.shift();
-      this.historyE2.shift();
-      this.historyETotal.shift();
-    }
+    push(t, dTheta1, dTheta2, w1, w2, e1, e2, eTotal);
   }
 
   public step(): [number, State] {
@@ -138,10 +137,12 @@ export class RotatorEngine {
   }
 
   public getUPlotData() {
+    // Return references to the persistent arrays. 
+    // IMPORTANT: uPlot will read these directly.
     return {
-      theta: [this.historyT, this.historyTheta1, this.historyTheta2],
-      omega: [this.historyT, this.historyOmega1, this.historyOmega2],
-      energy: [this.historyT, this.historyE1, this.historyE2, this.historyETotal],
+      theta: [this.uPlotT, this.uPlotTh1, this.uPlotTh2],
+      omega: [this.uPlotT, this.uPlotW1, this.uPlotW2],
+      energy: [this.uPlotT, this.uPlotE1, this.uPlotE2, this.uPlotETot],
     };
   }
 }

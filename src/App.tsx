@@ -13,7 +13,7 @@ import { Github } from 'lucide-react';
 declare const __BUILD_DATE__: string;
 
 const App: React.FC = () => {
-  const { state, uPlotData, isRunning, toggle, reset } = useSimulation();
+  const { state, uPlotData, isRunning, toggle, reset, tick } = useSimulation();
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(500);
 
@@ -57,7 +57,7 @@ const App: React.FC = () => {
       },
       y: { range: Config.THETA_Y_LIM }
     }
-  }), [uPlotData.theta, containerWidth]);
+  }), [containerWidth]);
 
   const omegaOptions: uPlot.Options = useMemo(() => ({
     width: containerWidth,
@@ -84,7 +84,7 @@ const App: React.FC = () => {
       },
       y: { range: Config.OMEGA_Y_LIM }
     }
-  }), [uPlotData.omega, containerWidth]);
+  }), [containerWidth]);
 
   const energyOptions: uPlot.Options = useMemo(() => ({
     width: containerWidth,
@@ -112,7 +112,7 @@ const App: React.FC = () => {
       },
       y: { range: Config.ENERGY_Y_LIM }
     }
-  }), [uPlotData.energy, containerWidth]);
+  }), [containerWidth]);
 
   const handleReset = (p: any) => {
     reset(p.t1, p.w1, p.t2, p.w2, p.J, p.g);
@@ -158,13 +158,13 @@ const App: React.FC = () => {
               <Col lg={7} ref={containerRef}>
                 <div className="d-flex flex-column gap-3">
                   <div className="bg-white p-2 rounded shadow-sm">
-                    <UPlotChart options={thetaOptions} data={uPlotData.theta as uPlot.AlignedData} width={containerWidth} />
+                    <UPlotChart options={thetaOptions} data={uPlotData.theta as uPlot.AlignedData} width={containerWidth} tick={tick} />
                   </div>
                   <div className="bg-white p-2 rounded shadow-sm">
-                    <UPlotChart options={omegaOptions} data={uPlotData.omega as uPlot.AlignedData} width={containerWidth} />
+                    <UPlotChart options={omegaOptions} data={uPlotData.omega as uPlot.AlignedData} width={containerWidth} tick={tick} />
                   </div>
                   <div className="bg-white p-2 rounded shadow-sm">
-                    <UPlotChart options={energyOptions} data={uPlotData.energy as uPlot.AlignedData} width={containerWidth} />
+                    <UPlotChart options={energyOptions} data={uPlotData.energy as uPlot.AlignedData} width={containerWidth} tick={tick} />
                   </div>
                 </div>
               </Col>

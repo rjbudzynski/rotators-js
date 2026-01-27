@@ -6,9 +6,10 @@ interface Props {
   options: uPlot.Options;
   data: uPlot.AlignedData;
   width?: number;
+  tick?: number;
 }
 
-const UPlotChart: React.FC<Props> = ({ options, data, width }) => {
+const UPlotChart: React.FC<Props> = ({ options, data, width, tick }) => {
   const chartRef = useRef<HTMLDivElement>(null);
   const uPlotInstance = useRef<uPlot>(undefined);
 
@@ -25,7 +26,7 @@ const UPlotChart: React.FC<Props> = ({ options, data, width }) => {
     if (uPlotInstance.current) {
       uPlotInstance.current.setData(data);
     }
-  }, [data]);
+  }, [tick]);
 
   useEffect(() => {
     if (uPlotInstance.current && width) {
