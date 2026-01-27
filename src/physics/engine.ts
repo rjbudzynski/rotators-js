@@ -1,6 +1,7 @@
 import { Config } from './constants';
 import { rk4Step } from './solver';
 import type { State } from './solver';
+import uPlot from 'uplot';
 
 export interface SimulationParams {
   t1: number;
@@ -20,29 +21,33 @@ export class RotatorEngine {
   private lastTheta: [number, number] = [0, 0];
   private unwrappedTheta: [number, number] = [0, 0];
 
+  // Circular Buffer Storage
+  private head: number = 0;
+  private count: number = 0; // Number of valid items currently in buffer
+  private readonly capacity: number = Config.MAX_POINTS;
+
+  // Fixed-size backing arrays
+  private bufT: number[];
+  private bufTh1: (number | null)[];
+  private bufTh2: (number | null)[];
+  private bufW1: (number | null)[];
+  private bufW2: (number | null)[];
+  private bufE1: (number | null)[];
+  private bufE2: (number | null)[];
+  private bufETot: (number | null)[];
+
   constructor() {
-    // For uPlot we need arrays that can hold nulls
-    this.uPlotT = [];
-    this.uPlotTh1 = [];
-    this.uPlotTh2 = [];
-    this.uPlotW1 = [];
-    this.uPlotW2 = [];
-    this.uPlotE1 = [];
-    this.uPlotE2 = [];
-    this.uPlotETot = [];
+    this.bufT = new Array(this.capacity).fill(0);
+    this.bufTh1 = new Array(this.capacity).fill(null);
+    this.bufTh2 = new Array(this.capacity).fill(null);
+    this.bufW1 = new Array(this.capacity).fill(null);
+    this.bufW2 = new Array(this.capacity).fill(null);
+    this.bufE1 = new Array(this.capacity).fill(null);
+    this.bufE2 = new Array(this.capacity).fill(null);
+    this.bufETot = new Array(this.capacity).fill(null);
 
     this.reset();
   }
-
-  // Persistent arrays to avoid GC pressure
-  private uPlotT: number[];
-  private uPlotTh1: (number | null)[];
-  private uPlotTh2: (number | null)[];
-  private uPlotW1: (number | null)[];
-  private uPlotW2: (number | null)[];
-  private uPlotE1: (number | null)[];
-  private uPlotE2: (number | null)[];
-  private uPlotETot: (number | null)[];
 
   public reset(
     t1: number = Math.PI - 0.001,
@@ -59,17 +64,36 @@ export class RotatorEngine {
     this.lastTheta = [t1, t2];
     this.unwrappedTheta = [t1, t2];
 
-    // Clear arrays while preserving references
-    this.uPlotT.length = 0;
-    this.uPlotTh1.length = 0;
-    this.uPlotTh2.length = 0;
-    this.uPlotW1.length = 0;
-    this.uPlotW2.length = 0;
-    this.uPlotE1.length = 0;
-    this.uPlotE2.length = 0;
-    this.uPlotETot.length = 0;
+    // Reset buffer pointers
+    this.head = 0;
+    this.count = 0;
 
     this.addToHistory(this.tCurr, this.yState);
+  }
+
+  private pushToBuffer(
+    pt: number, 
+    th1: number | null, 
+    th2: number | null, 
+    v1: number, 
+    v2: number, 
+    en1: number, 
+    en2: number, 
+    entot: number
+  ) {
+    this.bufT[this.head] = pt;
+    this.bufTh1[this.head] = th1;
+    this.bufTh2[this.head] = th2;
+    this.bufW1[this.head] = v1;
+    this.bufW2[this.head] = v2;
+    this.bufE1[this.head] = en1;
+    this.bufE2[this.head] = en2;
+    this.bufETot[this.head] = entot;
+
+    this.head = (this.head + 1) % this.capacity;
+    if (this.count < this.capacity) {
+      this.count++;
+    }
   }
 
   private addToHistory(t: number, y: State) {
@@ -94,51 +118,32 @@ export class RotatorEngine {
     const dTheta1 = wrap(this.unwrappedTheta[0]);
     const dTheta2 = wrap(this.unwrappedTheta[1]);
 
-    // Energy calculation: 0.5 * I * omega^2, where I = 1 (unit moment of inertia)
-    // Kinetic energy: 0.5 * w^2, Potential energy: g * (1 - cos(theta))
     const e1 = 0.5 * w1 * w1 + this.g * (1.0 - Math.cos(t1));
     const e2 = 0.5 * w2 * w2 + this.g * (1.0 - Math.cos(t2));
     const eTotal = e1 + e2 + this.J * (1.0 - Math.cos(t1 - t2));
 
-    const push = (pt: number, th1: number | null, th2: number | null, v1: number, v2: number, en1: number, en2: number, entot: number) => {
-      this.uPlotT.push(pt);
-      this.uPlotTh1.push(th1);
-      this.uPlotTh2.push(th2);
-      this.uPlotW1.push(v1);
-      this.uPlotW2.push(v2);
-      this.uPlotE1.push(en1);
-      this.uPlotE2.push(en2);
-      this.uPlotETot.push(entot);
-
-      // Keep window within bounds
-      const limit = Math.floor(Config.WINDOW_W / Config.DT) * 1.5;
-      if (this.uPlotT.length > limit) {
-        this.uPlotT.shift();
-        this.uPlotTh1.shift();
-        this.uPlotTh2.shift();
-        this.uPlotW1.shift();
-        this.uPlotW2.shift();
-        this.uPlotE1.shift();
-        this.uPlotE2.shift();
-        this.uPlotETot.shift();
-      }
-    };
-
-    // Check for jumps
-    if (this.uPlotTh1.length > 0) {
-      const lastT1 = this.uPlotTh1[this.uPlotTh1.length - 1];
-      const lastT2 = this.uPlotTh2[this.uPlotTh2.length - 1];
+    // Check for jumps (wrap-around visualization)
+    // We check the LAST valid point in the buffer
+    if (this.count > 0) {
+      const lastIdx = (this.head - 1 + this.capacity) % this.capacity;
+      const lastT1 = this.bufTh1[lastIdx];
+      const lastT2 = this.bufTh2[lastIdx];
 
       if (lastT1 !== null && lastT2 !== null) {
         const jump1 = Math.abs(dTheta1 - (lastT1 as number)) > Math.PI;
         const jump2 = Math.abs(dTheta2 - (lastT2 as number)) > Math.PI;
         if (jump1 || jump2) {
-          push(t - 1e-9, jump1 ? null : dTheta1, jump2 ? null : dTheta2, w1, w2, e1, e2, eTotal);
-        }
-      }
-    }
+          // Push a gap point
+          this.pushToBuffer(t - 1e-9, null, null, w1, w2, e1, e2, eTotal);
+    return {
+      theta: [t, th1, th2] as uPlot.AlignedData,
+      omega: [t, w1, w2] as uPlot.AlignedData,
+      energy: [t, e1, e2, etot] as uPlot.AlignedData,
+    };
+  }
+}
 
-    push(t, dTheta1, dTheta2, w1, w2, e1, e2, eTotal);
+    this.pushToBuffer(t, dTheta1, dTheta2, w1, w2, e1, e2, eTotal);
   }
 
   public step(): [number, State] {
@@ -148,13 +153,71 @@ export class RotatorEngine {
     return [this.tCurr, this.yState];
   }
 
+  // Cache for data arrays to prevent memory leaks
+  private cachedData: {
+    t: number[];
+    th1: (number | null)[];
+    th2: (number | null)[];
+    w1: (number | null)[];
+    w2: (number | null)[];
+    e1: (number | null)[];
+    e2: (number | null)[];
+    etot: (number | null)[];
+  } | null = null;
+
   public getUPlotData() {
-    // Return fresh container arrays pointing to the persistent buffers.
-    // This ensures uPlot detects data changes even if the inner array references are reused.
+    // Reuse cached arrays to prevent memory allocation every call
+    if (!this.cachedData) {
+      this.cachedData = {
+        t: new Array(this.capacity),
+        th1: new Array(this.capacity),
+        th2: new Array(this.capacity),
+        w1: new Array(this.capacity),
+        w2: new Array(this.capacity),
+        e1: new Array(this.capacity),
+        e2: new Array(this.capacity),
+        etot: new Array(this.capacity),
+      };
+    }
+
+    const { t, th1, th2, w1, w2, e1, e2, etot } = this.cachedData;
+
+    // Unroll circular buffer into cached arrays
+    let start = (this.head - this.count + this.capacity) % this.capacity;
+
+    for (let i = 0; i < this.count; i++) {
+      const idx = (start + i) % this.capacity;
+      t[i] = this.bufT[idx];
+      th1[i] = this.bufTh1[idx];
+      th2[i] = this.bufTh2[idx];
+      w1[i] = this.bufW1[idx];
+      w2[i] = this.bufW2[idx];
+      e1[i] = this.bufE1[idx];
+      e2[i] = this.bufE2[idx];
+      etot[i] = this.bufETot[idx];
+    }
+
+    // Trim arrays to actual count (important for uPlot)
+    t.length = this.count;
+    th1.length = this.count;
+    th2.length = this.count;
+    w1.length = this.count;
+    w2.length = this.count;
+    e1.length = this.count;
+    e2.length = this.count;
+    etot.length = this.count;
+
     return {
-      theta: [this.uPlotT, this.uPlotTh1, this.uPlotTh2] as uPlot.AlignedData,
-      omega: [this.uPlotT, this.uPlotW1, this.uPlotW2] as uPlot.AlignedData,
-      energy: [this.uPlotT, this.uPlotE1, this.uPlotE2, this.uPlotETot] as uPlot.AlignedData,
+      theta: [t, th1, th2] as uPlot.AlignedData,
+      omega: [t, w1, w2] as uPlot.AlignedData,
+      energy: [t, e1, e2, etot] as uPlot.AlignedData,
+    };
+  }
+
+    return {
+      theta: [t, th1, th2] as uPlot.AlignedData,
+      omega: [t, w1, w2] as uPlot.AlignedData,
+      energy: [t, e1, e2, etot] as uPlot.AlignedData,
     };
   }
 }
