@@ -94,6 +94,8 @@ export class RotatorEngine {
     const dTheta1 = wrap(this.unwrappedTheta[0]);
     const dTheta2 = wrap(this.unwrappedTheta[1]);
 
+    // Energy calculation: 0.5 * I * omega^2, where I = 1 (unit moment of inertia)
+    // Kinetic energy: 0.5 * w^2, Potential energy: g * (1 - cos(theta))
     const e1 = 0.5 * w1 * w1 + this.g * (1.0 - Math.cos(t1));
     const e2 = 0.5 * w2 * w2 + this.g * (1.0 - Math.cos(t2));
     const eTotal = e1 + e2 + this.J * (1.0 - Math.cos(t1 - t2));
@@ -128,8 +130,8 @@ export class RotatorEngine {
       const lastT2 = this.uPlotTh2[this.uPlotTh2.length - 1];
 
       if (lastT1 !== null && lastT2 !== null) {
-        const jump1 = Math.abs(dTheta1 - (lastT1 as number)) > 5.0;
-        const jump2 = Math.abs(dTheta2 - (lastT2 as number)) > 5.0;
+        const jump1 = Math.abs(dTheta1 - (lastT1 as number)) > Math.PI;
+        const jump2 = Math.abs(dTheta2 - (lastT2 as number)) > Math.PI;
         if (jump1 || jump2) {
           push(t - 1e-9, jump1 ? null : dTheta1, jump2 ? null : dTheta2, w1, w2, e1, e2, eTotal);
         }
