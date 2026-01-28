@@ -28,11 +28,15 @@ export function useSimulation() {
         lastUpdateRef.current = now;
       }
       
-      const elapsed = now - lastUpdateRef.current;
+      let elapsed = now - lastUpdateRef.current;
       
       if (elapsed >= Config.SIM_INTERVAL) {
-        step();
-        lastUpdateRef.current = now;
+        // Execute as many steps as needed to catch up with wall-clock time
+        while (elapsed >= Config.SIM_INTERVAL) {
+          step();
+          lastUpdateRef.current += Config.SIM_INTERVAL;
+          elapsed -= Config.SIM_INTERVAL;
+        }
       }
       
       requestRef.current = requestAnimationFrame(onTick);
