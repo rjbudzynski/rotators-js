@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { RotatorEngine } from './engine';
 import { Config } from './constants';
 import type { State } from './solver';
@@ -7,15 +7,12 @@ export function useSimulation() {
   const [engine] = useState(() => new RotatorEngine());
   const [isRunning, setIsRunning] = useState(false);
   const [state, setState] = useState<State>(engine.yState);
-  const [tick, setTick] = useState(0); 
   
   const requestRef = useRef<number>(undefined);
   const lastUpdateRef = useRef<number>(0);
 
   const step = useCallback(() => {
-    const [, s] = engine.step();
-    setState(s);
-    setTick(t => t + 1);
+    engine.step();
   }, [engine]);
 
   useEffect(() => {
@@ -54,19 +51,13 @@ export function useSimulation() {
   
   const reset = useCallback((t1: number, w1: number, t2: number, w2: number, J: number, g: number) => {
     engine.reset(t1, w1, t2, w2, J, g);
-    setState(engine.yState);
+    setState([...engine.yState] as State); // Fresh reference for initial render
     lastUpdateRef.current = 0;
-    setTick(t => t + 1);
     setIsRunning(false);
   }, [engine]);
 
-  // Return a fresh reference to the data structure when tick changes
-  const uPlotData = useMemo(() => engine.getUPlotData(), [engine, tick]); // eslint-disable-line react-hooks/exhaustive-deps
-
   return {
     state,
-    uPlotData,
-    tick,
     isRunning,
     toggle,
     reset,

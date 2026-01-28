@@ -14,7 +14,7 @@ import { Github } from 'lucide-react';
 declare const __BUILD_DATE__: string;
 
 const App: React.FC = () => {
-  const { state, uPlotData, isRunning, toggle, reset, tick } = useSimulation();
+  const { isRunning, toggle, reset, engine } = useSimulation();
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(500);
 
@@ -124,6 +124,10 @@ const App: React.FC = () => {
     window.close();
   }, []);
 
+  const getThetaData = React.useCallback((eng: any) => eng.getUPlotData().theta, []);
+  const getOmegaData = React.useCallback((eng: any) => eng.getUPlotData().omega, []);
+  const getEnergyData = React.useCallback((eng: any) => eng.getUPlotData().energy, []);
+
   return (
     <div className="bg-light min-vh-100">
       <Navbar bg="dark" variant="dark" className="mb-4">
@@ -155,18 +159,18 @@ const App: React.FC = () => {
           <Col md={9} lg={10}>
             <Row>
               <Col lg={5} className="mb-4">
-                <SimulationCanvas state={state} />
+                <SimulationCanvas engine={engine} />
               </Col>
               <Col lg={7} ref={containerRef}>
                 <div className="d-flex flex-column gap-3">
                   <div className="bg-white p-2 rounded shadow-sm">
-                    <UPlotChart options={thetaOptions} data={uPlotData.theta as uPlot.AlignedData} width={containerWidth} tick={tick} />
+                    <UPlotChart options={thetaOptions} engine={engine} getData={getThetaData} width={containerWidth} />
                   </div>
                   <div className="bg-white p-2 rounded shadow-sm">
-                    <UPlotChart options={omegaOptions} data={uPlotData.omega as uPlot.AlignedData} width={containerWidth} tick={tick} />
+                    <UPlotChart options={omegaOptions} engine={engine} getData={getOmegaData} width={containerWidth} />
                   </div>
                   <div className="bg-white p-2 rounded shadow-sm">
-                    <UPlotChart options={energyOptions} data={uPlotData.energy as uPlot.AlignedData} width={containerWidth} tick={tick} />
+                    <UPlotChart options={energyOptions} engine={engine} getData={getEnergyData} width={containerWidth} />
                   </div>
                 </div>
               </Col>

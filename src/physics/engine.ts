@@ -145,7 +145,19 @@ export class RotatorEngine {
     this.yState = rk4Step(this.yState, this.tCurr, Config.DT, this.J, this.g);
     this.tCurr += Config.DT;
     this.addToHistory(this.tCurr, this.yState);
+    this.notifyListeners();
     return [this.tCurr, this.yState];
+  }
+
+  private listeners: (() => void)[] = [];
+  public subscribe(fn: () => void) {
+    this.listeners.push(fn);
+    return () => {
+      this.listeners = this.listeners.filter(l => l !== fn);
+    };
+  }
+  private notifyListeners() {
+    for (const l of this.listeners) l();
   }
 
   // Cache for returning arrays to prevent memory allocation
