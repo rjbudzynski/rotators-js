@@ -10,7 +10,7 @@ interface Props {
   onQuit: () => void;
 }
 
-const ControlPanel: React.FC<Props> = ({ isRunning, onToggle, onReset, onQuit }) => {
+const ControlPanel: React.FC<Props> = React.memo(({ isRunning, onToggle, onReset, onQuit }) => {
   const [params, setParams] = React.useState({
     t1: (Math.PI - 0.001).toString(),
     w1: "0",
@@ -132,6 +132,6 @@ const ControlPanel: React.FC<Props> = ({ isRunning, onToggle, onReset, onQuit })
       </Card.Body>
     </Card>
   );
-};
+});
 
 export default ControlPanel;

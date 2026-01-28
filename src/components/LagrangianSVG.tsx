@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { memo } from 'react';
 
-const LagrangianSVG: React.FC = () => (
+const LagrangianSVG: React.FC = memo(() => (
   <svg 
     viewBox="0 0 518 46" 
     width="100%" 
@@ -78,6 +78,6 @@ const LagrangianSVG: React.FC = () => (
       </g>
     </g>
   </svg>
-);
+));
 
 export default LagrangianSVG;

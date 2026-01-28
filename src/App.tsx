@@ -23,7 +23,8 @@ const App: React.FC = () => {
     
     const observer = new ResizeObserver((entries) => {
       for (const entry of entries) {
-        setContainerWidth(entry.contentRect.width - 20); // small padding
+        const newWidth = Math.floor(entry.contentRect.width - 20);
+        setContainerWidth(prev => (Math.abs(prev - newWidth) > 2 ? newWidth : prev));
       }
     });
     
@@ -115,13 +116,13 @@ const App: React.FC = () => {
     }
   }), []);
 
-  const handleReset = (p: SimulationParams) => {
+  const handleReset = React.useCallback((p: SimulationParams) => {
     reset(p.t1, p.w1, p.t2, p.w2, p.J, p.g);
-  };
+  }, [reset]);
 
-  const handleQuit = () => {
+  const handleQuit = React.useCallback(() => {
     window.close();
-  };
+  }, []);
 
   return (
     <div className="bg-light min-vh-100">
