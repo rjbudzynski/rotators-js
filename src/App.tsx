@@ -12,6 +12,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import { Github } from 'lucide-react';
 
 declare const __BUILD_DATE__: string;
+declare const __GIT_HASH__: string;
 
 const App: React.FC = () => {
   const { isRunning, toggle, reset, engine } = useSimulation();
@@ -38,7 +39,8 @@ const App: React.FC = () => {
     width: 100, // Initial dummy width
     height: chartHeight,
     title: "Angle (rad)",
-    legend: { show: true, live: false },
+    legend: { show: false },
+    cursor: { show: false },
     series: [
       {},
       { label: "Theta 1", stroke: "#1f77b4", width: 2, spanGaps: false },
@@ -65,7 +67,8 @@ const App: React.FC = () => {
     width: 100,
     height: chartHeight,
     title: "Velocity (rad/s)",
-    legend: { show: true, live: false },
+    legend: { show: false },
+    cursor: { show: false },
     series: [
       {},
       { label: "Omega 1", stroke: "#1f77b4", width: 2, spanGaps: true },
@@ -92,7 +95,8 @@ const App: React.FC = () => {
     width: 100,
     height: chartHeight,
     title: "Energy (J)",
-    legend: { show: true, live: false },
+    legend: { show: false },
+    cursor: { show: false },
     series: [
       {},
       { label: "E1", stroke: "#1f77b4", width: 2, spanGaps: true },
@@ -183,7 +187,7 @@ const App: React.FC = () => {
         <Container fluid>
           <span>
             © 2026 <a href="mailto:robert@budzynski.xyz" className="text-decoration-none text-muted fw-bold">Robert Budzyński</a>. 
-            All rights reserved. | Build date: {__BUILD_DATE__}
+            All rights reserved. | Build date: {__BUILD_DATE__} | {__GIT_HASH__}
           </span>
         </Container>
       </footer>

@@ -70,6 +70,7 @@ export class RotatorEngine {
     this.uPlotETot.length = 0;
 
     this.addToHistory(this.tCurr, this.yState);
+    this.notifyListeners();
   }
 
   private addToHistory(t: number, y: State) {
