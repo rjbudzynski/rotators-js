@@ -20,7 +20,10 @@ const UPlotChart: React.FC<Props> = ({ options, data, width, tick }) => {
     return () => {
       uPlotInstance.current?.destroy();
     };
-  }, [options, data]);
+    // We only want to re-create the chart if options change. 
+    // Data updates are handled by the setData effect below.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [options]);
 
   useEffect(() => {
     if (uPlotInstance.current) {

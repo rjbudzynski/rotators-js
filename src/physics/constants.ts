@@ -10,4 +10,6 @@ export const Config = {
   ENERGY_Y_LIM: [-5, 130] as [number, number],
   THETA_Y_LIM: [-3.5, 3.5] as [number, number],
   OMEGA_Y_LIM: [-10, 10] as [number, number],
+  
+  MAX_POINTS: 400,
 };

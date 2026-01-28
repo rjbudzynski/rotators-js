@@ -34,7 +34,7 @@ const App: React.FC = () => {
   const chartHeight = 180;
 
   const thetaOptions: uPlot.Options = useMemo(() => ({
-    width: containerWidth,
+    width: 100, // Initial dummy width
     height: chartHeight,
     title: "Angle (rad)",
     legend: { show: true, live: false },
@@ -58,10 +58,10 @@ const App: React.FC = () => {
       },
       y: { range: Config.THETA_Y_LIM }
     }
-  }), [containerWidth]);
+  }), []);
 
   const omegaOptions: uPlot.Options = useMemo(() => ({
-    width: containerWidth,
+    width: 100,
     height: chartHeight,
     title: "Velocity (rad/s)",
     legend: { show: true, live: false },
@@ -85,10 +85,10 @@ const App: React.FC = () => {
       },
       y: { range: Config.OMEGA_Y_LIM }
     }
-  }), [containerWidth]);
+  }), []);
 
   const energyOptions: uPlot.Options = useMemo(() => ({
-    width: containerWidth,
+    width: 100,
     height: chartHeight,
     title: "Energy (J)",
     legend: { show: true, live: false },
@@ -113,7 +113,7 @@ const App: React.FC = () => {
       },
       y: { range: Config.ENERGY_Y_LIM }
     }
-  }), [containerWidth]);
+  }), []);
 
   const handleReset = (p: SimulationParams) => {
     reset(p.t1, p.w1, p.t2, p.w2, p.J, p.g);
