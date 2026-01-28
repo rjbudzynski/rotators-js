@@ -6,10 +6,11 @@ import type { SimulationParams } from './physics/engine';
 import SimulationCanvas from './components/SimulationCanvas';
 import ControlPanel from './components/ControlPanel';
 import UPlotChart from './components/UPlotChart';
+import HelpOverlay from './components/HelpOverlay';
 import uPlot from 'uplot';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
-import { Github } from 'lucide-react';
+import { Github, HelpCircle } from 'lucide-react';
 
 declare const __BUILD_DATE__: string;
 declare const __GIT_HASH__: string;
@@ -18,6 +19,7 @@ const App: React.FC = () => {
   const { isRunning, toggle, reset, engine } = useSimulation();
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(500);
+  const [showHelp, setShowHelp] = useState(false);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -136,7 +138,15 @@ const App: React.FC = () => {
     <div className="bg-light min-vh-100">
       <Navbar bg="dark" variant="dark" className="mb-4">
         <Container fluid>
-          <Navbar.Brand>Coupled Rotators Simulation</Navbar.Brand>
+          <div className="d-flex align-items-center">
+            <Navbar.Brand>Coupled Rotators Simulation</Navbar.Brand>
+            <HelpCircle 
+              size={20} 
+              className="text-white opacity-75 cursor-pointer ms-2" 
+              style={{ cursor: 'pointer' }}
+              onClick={() => setShowHelp(true)} 
+            />
+          </div>
           <Navbar.Collapse className="justify-content-end">
             <a 
               href="https://github.com/rjbudzynski/rotators-js" 
@@ -191,6 +201,8 @@ const App: React.FC = () => {
           </span>
         </Container>
       </footer>
+
+      <HelpOverlay show={showHelp} onHide={() => setShowHelp(false)} />
     </div>
   );
 };
