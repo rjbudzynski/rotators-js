@@ -1,6 +1,6 @@
 export const Config = {
   L_ARM: 1.0,
-  WINDOW_W: 5.0,
+  WINDOW_W: 10.0,
   DT: 0.02,
   SIM_INTERVAL: 20, // ms
   
@@ -11,5 +11,5 @@ export const Config = {
   THETA_Y_LIM: [-3.5, 3.5] as [number, number],
   OMEGA_Y_LIM: [-10, 10] as [number, number],
   
-  MAX_POINTS: 400,
+  MAX_POINTS: 800,
 };
